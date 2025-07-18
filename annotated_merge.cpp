@@ -78,6 +78,44 @@ class RoundRobinAnnotatedMerger {
         }
 };
 
+template<unsigned int N, typename AP_INT_DTYPE, unsigned int AP_INT_BITWIDTH>
 class AnnotatedSplitter {
-    // TODO
+    public:
+        AnnotatedSplitter() = default;
+
+        static const unsigned int DATAWIDTH = AP_INT_BITWIDTH - sizeof(unsigned int) * 8;
+
+        hls::stream<AP_INT_DTYPE> out_streams[N];
+
+        /**
+         * Get the header from the incoming data. TODO: Fix for any width of source ID
+         */
+        static unsigned int get_data_header(AP_INT_DTYPE incoming_data) {
+            // TODO: Flexible source id bitwidth
+            return static_cast<unsigned int>(incoming_data >> DATAWIDTH);
+        }
+
+        /**
+         * Get the contents of an incoming data package, without the header
+         */
+        static AP_INT_DTYPE get_data_contents(AP_INT_DTYPE incoming_data) {
+            return incoming_data & ((static_cast<AP_INT_DTYPE>(1) << DATAWIDTH) - 1);
+        }
+
+        /**
+         * Read and demux if data is available. If the source ID is unknown do nothing and return false. Also return false if no data is available
+         */
+        bool try_read_and_demux(hls::stream<AP_INT_DTYPE> &incoming) {
+            AP_INT_DTYPE data;
+            if (incoming.read_nb(data)) {
+                auto source = AnnotatedSplitter<N, AP_INT_DTYPE, AP_INT_BITWIDTH>::get_data_header(data);
+                auto contents = AnnotatedSplitter<N, AP_INT_DTYPE, AP_INT_BITWIDTH>::get_data_contents(data);
+                if (source >= N) {
+                    return false;
+                }
+                out_streams[source].write(contents);
+                return true;
+            }
+            return false;
+        }
 };
