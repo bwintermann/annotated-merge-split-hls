@@ -13,8 +13,8 @@ unsigned int errors = 0;
 /**
  * Helper function to let the merger merge a certain number of times into the target outgoing stream
  */
-template<unsigned int N, typename T, unsigned int TW>
-void _merge_times(RoundRobinAnnotatedMerger<N, T, TW> &merger, unsigned int times, hls::stream<T> &target) {
+template<unsigned int N, typename T>
+void _merge_times(RoundRobinAnnotatedMerger<N, T> &merger, unsigned int times, hls::stream<T> &target) {
     for (unsigned int i = 0; i < times; i++) {
         merger.write_into(target);
     }
@@ -23,8 +23,8 @@ void _merge_times(RoundRobinAnnotatedMerger<N, T, TW> &merger, unsigned int time
 /**
  * Helper function to split a certain number of times. Does not check for success of reads
  */
-template<unsigned int N, typename T, unsigned int TW>
-void _split_times(AnnotatedSplitter<N, T, TW> &splitter, unsigned int times, hls::stream<T> &source) {
+template<unsigned int N, typename T>
+void _split_times(AnnotatedSplitter<N, T> &splitter, unsigned int times, hls::stream<T> &source) {
     for (unsigned int i = 0; i < times; i++) {
         splitter.try_read_and_demux(source);
     }
@@ -53,7 +53,7 @@ void test_continuous_roundrobin_merger_only(unsigned int iterations, bool print_
     }
 
     // Let the merger read all streams and write everything into the output stream
-    RoundRobinAnnotatedMerger<N, IntType, Bitwidth> merger;
+    RoundRobinAnnotatedMerger<N, IntType> merger;
     for (unsigned int i = 0; i < iterations; i++) {
         for (unsigned int j = 0; j < N; j++) {
             merger.read_from(streams[j]);
@@ -63,7 +63,7 @@ void test_continuous_roundrobin_merger_only(unsigned int iterations, bool print_
 
     // Read out results and test manually (do not use AnnotatedSplitter)
     IntType output, outdata, outsource;
-    using Splitter = AnnotatedSplitter<N, IntType, Bitwidth>;
+    using Splitter = AnnotatedSplitter<N, IntType>;
     for (unsigned int i = 0; i < expected_results.size(); i++) {
         output = out.read();
         outdata = Splitter::get_data_contents(output);
@@ -102,14 +102,14 @@ void test_continuous_roundrobin_complete(unsigned int iterations, bool print_on_
     }
 
     // Read everything into the merger
-    RoundRobinAnnotatedMerger<N, IntType, Bitwidth> merger;
+    RoundRobinAnnotatedMerger<N, IntType> merger;
     for (unsigned int i = 0; i < iterations; i++) {
         for (unsigned int j = 0; j < N; j++) {
             merger.read_from(in_streams[j]);
         }
     }
     // Merge and split everything
-    AnnotatedSplitter<N, IntType, Bitwidth> demux;
+    AnnotatedSplitter<N, IntType> demux;
     _merge_times(merger, N*iterations, network_stream);
     _split_times(demux, N*iterations, network_stream);
 
