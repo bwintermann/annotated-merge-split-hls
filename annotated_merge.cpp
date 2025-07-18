@@ -3,6 +3,7 @@
 #include <utility>
 #include <algorithm>
 
+// TODO: Templated / paramter packed version
 
 /***
  * Usage:
@@ -31,11 +32,12 @@ class RoundRobinAnnotatedMerger {
         // The current round-robin selected candidate. Moves after every write_into() call
         unsigned int rr_candidate = 0;
 
+    public:
+
+        RoundRobinAnnotatedMerger() = default;
+
         // Width to shift the header so that it is at MSB
         const unsigned int HEADER_SHIFT = (AP_INT_BITWIDTH - sizeof(rr_candidate) * 8);
-
-    public:
-        RoundRobinAnnotatedMerger() = default;
     
         /***
          * Read from the given stream into the merger's stream. Is non-blocking. Internally increments the current stream being read. => Needs to be
